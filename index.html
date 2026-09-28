@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>돌려 읽기</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@700&family=Shippori+Mincho:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    @font-face {
+      font-family: "smssmyunjo";
+      src: local("SM SSMyungJo Std"), url("fonts/smssmyunjo.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "07ReallyScaryMinchotai";
+      src: local("07ReallyScaryMinchotai"), url("fonts/07ReallyScaryMinchotai.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "SM KGothic Std";
+      src: local("SM KGothic Std"), url("fonts/SMKGothicStd.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: "SM SMyungJo Std";
+      src: local("SM SMyungJo Std"), url("fonts/SMSMyungJoStd.ttf") format("truetype");
+      font-weight: 400;
+      font-display: swap;
+    }
+
+    :root {
+      --t: 0;
+      --ink: #111;
+      --red: #ed1c24;
+      --ko: "smssmyunjo", "Apple SD Gothic Neo", serif;
+      --myungjo: "SM SMyungJo Std", "Apple SD Gothic Neo", serif;
+      --ja: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+      --ja-title: "07ReallyScaryMinchotai", "Hiragino Mincho ProN", serif;
+      --gothic: "SM KGothic Std", "Apple SD Gothic Neo", sans-serif;
+      --ja-gothic: "Noto Sans JP", "Hiragino Sans", "Apple SD Gothic Neo", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      background: #fff;
+      color: var(--ink);
+      overflow: hidden;
+    }
+
+    body {
+      font-family: var(--ko);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .bar {
+      position: fixed;
+      z-index: 40;
+      transform: translateZ(0);
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2.75rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0 1rem;
+      background: #fff;
+      color: var(--ink);
+      font-family: var(--gothic);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+    }
+
+    .lab-ja {
+      text-align: right;
+      letter-spacing: 0.14em;
+    }
+
+    .track-wrap {
+      position: relative;
+      width: min(88vw, calc(100vw - 7.5rem));
+      height: 1.1rem;
+      flex: 0 1 auto;
+    }
+
+    .track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      height: 5px;
+      transform: translateY(-50%);
+      background: #c4c4c4;
+    }
+
+    .fill {
+      height: 100%;
+      width: calc(var(--t) / 180 * 100%);
+      background: #c4c4c4;
+    }
+
+    .handle {
+      position: absolute;
+      top: 50%;
+      left: calc(var(--t) / 180 * 100%);
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      background: #c4c4c4;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .track-wrap input {
+      position: absolute;
+      inset: -0.4rem 0;
+      width: 100%;
+      margin: 0;
+      opacity: 0;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .track-wrap input:active { cursor: grabbing; }
+
+    .track-wrap:focus-within .handle {
+      box-shadow: 0 0 0 3px rgba(196, 196, 196, 0.55);
+    }
+
+    .titles {
+      position: fixed;
+      z-index: 40;
+      transform: translateZ(0);
+      top: 3.15rem;
+      left: 4.5vw;
+      right: 4.5vw;
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      pointer-events: none;
+    }
+
+    .titles h1 {
+      margin: 0;
+      color: var(--red);
+      font-family: var(--gothic);
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+    }
+
+    .titles .t-ja {
+      font-family: var(--ja-gothic);
+      font-weight: 700;
+      text-align: right;
+    }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      perspective: 640px;
+      pointer-events: none;
+    }
+
+    .stage { z-index: 2; }
+
+    .flipper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transform-style: preserve-3d;
+    }
+
+    .flipper-content { transform: rotateY(calc(var(--t) * 1deg)); }
+
+    .face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+    }
+
+    .face.back { transform: rotateY(180deg); }
+
+    .giant {
+      margin: 0;
+      color: #c4c4c4;
+      font-family: var(--gothic);
+      font-weight: 400;
+      line-height: 1;
+      letter-spacing: 0.08em;
+      font-size: clamp(3.6rem, 8vw, 6.4rem);
+      white-space: nowrap;
+    }
+
+    .giant-ja {
+      font-family: var(--ja-title);
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      letter-spacing: 0.18em;
+      font-size: clamp(4.2rem, 9vw, 7.2rem);
+    }
+
+    .face-copy {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 12rem 4vw 0;
+    }
+
+    .display-title {
+      position: fixed;
+      z-index: 40;
+      transform: translateZ(0);
+      left: 0;
+      right: 0;
+      bottom: 3.5vh;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+    }
+
+    .display-title .giant {
+      grid-area: 1 / 1;
+    }
+
+    .display-title .is-off {
+      visibility: hidden;
+      position: absolute;
+    }
+
+    .copy-ko,
+    .copy-ja { pointer-events: auto; }
+
+    .copy-ko {
+      width: min(76rem, 86vw);
+      display: flex;
+      align-items: flex-start;
+      gap: 2.4rem;
+      font-family: var(--myungjo);
+      font-size: 18px;
+      line-height: 1.75;
+      text-align: left;
+      word-break: keep-all;
+    }
+
+    .copy-ko .col-main,
+    .copy-ko .col-side { flex: 1 1 0; min-width: 0; }
+
+    .copy-ko p { margin: 0 0 0.85em; }
+    .copy-ko p:last-child { margin-bottom: 0; }
+    .copy-ko .col-main p + p { text-indent: 1em; }
+
+    .copy-ja {
+      height: min(42vh, 460px);
+      width: max-content;
+      max-width: 100%;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+      font-family: var(--ja);
+      font-size: clamp(1rem, 1.45vw, 1.2rem);
+      line-height: 2.05;
+      letter-spacing: 0.08em;
+      line-break: strict;
+    }
+
+    .copy-ja p {
+      margin: 0;
+      margin-block-end: 1.15em;
+    }
+
+    @media (max-width: 720px) {
+      .stage { perspective: 480px; }
+
+      .titles { top: 3.35rem; }
+      .titles h1 { font-size: 0.82rem; }
+      .face-copy { padding: 5.6rem 1.2rem 11rem; }
+      .display-title { bottom: 1.6rem; }
+      .giant { font-size: 2.5rem; letter-spacing: 0.04em; }
+      .giant-ja { font-size: 2.3rem; }
+      .copy-ko { width: min(30rem, 92vw); display: block; font-size: 0.92rem; line-height: 1.7; }
+      .copy-ja { height: 34vh; font-size: 0.92rem; line-height: 1.85; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .flipper-content { transform: none; }
+      .face { position: relative; inset: auto; backface-visibility: visible; }
+      .face.back { transform: none; }
+      .stage {
+        perspective: none;
+        overflow: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .flipper-content { height: auto; }
+      .face-copy { min-height: 100vh; }
+      .copy-ja { height: 46vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bar">
+    <span>KR</span>
+    <div class="track-wrap">
+      <div class="track"><div class="fill"></div></div>
+      <div class="handle"></div>
+      <input id="language" type="range" min="0" max="180" step="1" value="0" aria-label="한국어에서 일본어 세로쓰기로">
+    </div>
+    <span class="lab-ja">JP</span>
+  </div>
+
+  <div class="titles">
+    <h1>돌려 읽기</h1>
+    <h1 class="t-ja" lang="ja">向きを変えると</h1>
+  </div>
+
+  <main class="stage">
+    <div class="flipper flipper-content">
+      <article class="face face-copy front" lang="ko">
+        <div class="copy-ko">
+          <div class="col-main">
+            <p>한국어의 가로쓰기는 글자를 왼쪽에서 오른쪽으로 배열하고, 문장을 위에서 아래로 이어가는 방식이다. 현대 한국어에서 가장 일반적으로 사용되는 쓰기 방식으로, 책과 신문을 비롯해 웹사이트와 모바일 화면 등 다양한 매체에서 폭넓게 활용된다.</p>
+            <p>한글은 음절 단위의 글자 형태가 비교적 일정한 사각형 구조를 이루기 때문에 가로로 배열했을 때 안정적인 흐름을 만든다. 가로쓰기에서는 글자의 크기뿐만 아니라 자간과 행간, 한 줄의 길이가 글을 읽는 리듬에 영향을 준다. 특히 디지털 환경에서는 화면의 크기가 달라지기 때문에 적절한 줄 길이와 여백을 설정하는 것이 중요하다.</p>
+          </div>
+          <p class="col-side">가로쓰기는 시선이 왼쪽에서 오른쪽으로 이동하는 흐름을 기본으로 한다. 따라서 제목과 본문, 이미지와 여백 등의 요소 역시 이러한 방향성을 고려하여 배치하며, 이를 통해 정보의 순서와 위계를 자연스럽게 전달할 수 있다.</p>
+        </div>
+      </article>
+      <article class="face face-copy back" lang="ja">
+        <div class="copy-ja">
+          <p>日本語の縦書きは、文字を上から下へ並べ、行を右から左へ送っていく書字形式である。日本語では古くから用いられてきた組版方法であり、現在でも小説や新聞、雑誌、詩歌など、さまざまな印刷物で見ることができる。</p>
+          <p>漢字とひらがな、カタカナが組み合わされる日本語では、文字が縦方向に連なることで独特のリズムが生まれる。縦書きでは、文字の大きさだけでなく、字間や行間、行の長さが文章の読みやすさや印象を左右する。また、句読点や括弧などの記号も、縦方向の流れに合わせて位置や形が調整される。</p>
+          <p>縦書きでは視線が上から下へ進み、一つの行を読み終えると左側の次の行へ移動する。この方向性は文章だけでなく、見出しや画像、余白などの配置にも影響し、日本語特有の誌面構成や視覚的な流れを生み出している。</p>
+        </div>
+      </article>
+    </div>
+  </main>
+
+  <div class="display-title">
+    <p class="giant" id="title-ko">가로쓰기</p>
+    <p class="giant giant-ja is-off" id="title-ja" lang="ja">縦書き</p>
+  </div>
+
+  <script>
+    const slider = document.querySelector("#language");
+    const root = document.documentElement;
+    const koFace = document.querySelector(".flipper-content .front");
+    const jaFace = document.querySelector(".flipper-content .back");
+
+    function apply(value) {
+      const angle = Number(value);
+      root.style.setProperty("--t", String(angle));
+      const showJapanese = angle > 90;
+      koFace.setAttribute("aria-hidden", showJapanese ? "true" : "false");
+      jaFace.setAttribute("aria-hidden", showJapanese ? "false" : "true");
+      document.querySelector("#title-ko").classList.toggle("is-off", showJapanese);
+      document.querySelector("#title-ja").classList.toggle("is-off", !showJapanese);
+      slider.setAttribute("aria-valuetext", showJapanese ? "일본어 세로쓰기" : "한국어 가로쓰기");
+    }
+
+    slider.addEventListener("input", () => apply(slider.value));
+    apply(slider.value);
+  </script>
+</body>
+</html>
